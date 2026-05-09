@@ -75,9 +75,31 @@ public class ReservationController {
         return ResponseEntity.ok().build();
     }
 
+    @PutMapping("/{id}/complete")
+    public ResponseEntity<Void> completeReservation(@PathVariable Long id) {
+        try {
+            reservationService.completeReservation(id);
+            return ResponseEntity.ok().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteReservation(@PathVariable Long id) {
         reservationService.deleteReservation(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/reschedule")
+    public ResponseEntity<?> rescheduleReservation(
+            @PathVariable Long id, 
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime newStartTime) {
+        try {
+            Reservation updatedReservation = reservationService.rescheduleReservation(id, newStartTime);
+            return ResponseEntity.ok(updatedReservation);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
