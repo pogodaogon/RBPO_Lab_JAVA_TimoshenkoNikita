@@ -36,7 +36,7 @@ public class DataInitializer implements CommandLineRunner {
             table1.setLocation("у окна");
             table1.setIsAvailable(true);
             tableRepository.save(table1);
-            
+
             Table table2 = new Table();
             table2.setRestaurantId(rest.getId());
             table2.setTableNumber("VIP-1");

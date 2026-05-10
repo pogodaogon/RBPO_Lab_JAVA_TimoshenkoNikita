@@ -9,10 +9,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import ru.mfa.dto.LoginDto;
+import ru.mfa.dto.RefreshTokenRequestDto;
+import ru.mfa.dto.TokenResponseDto;
 import ru.mfa.dto.UserRegistrationDto;
 import ru.mfa.model.Role;
 import ru.mfa.model.User;
 import ru.mfa.repository.UserRepository;
+import ru.mfa.service.JwtService;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 
 @RestController
 @RequestMapping("/auth")
@@ -21,6 +29,8 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     @PostMapping("/register")
     public ResponseEntity<String> register(@Valid @RequestBody UserRegistrationDto registrationDto) {
@@ -37,5 +47,25 @@ public class AuthController {
         userRepository.save(user);
 
         return new ResponseEntity<>("User registered successfully", HttpStatus.CREATED);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponseDto> login(@Valid @RequestBody LoginDto loginDto) {
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDto.getUsername(), loginDto.getPassword())
+        );
+
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        // В реальном приложении deviceId можно получать из заголовков (например, User-Agent)
+        String deviceId = "postman-client"; 
+        
+        TokenResponseDto tokens = jwtService.createTokensAndSession(userDetails, deviceId);
+        return ResponseEntity.ok(tokens);
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponseDto> refresh(@Valid @RequestBody RefreshTokenRequestDto refreshDto) {
+        TokenResponseDto tokens = jwtService.refreshTokens(refreshDto.getRefreshToken());
+        return ResponseEntity.ok(tokens);
     }
 }
