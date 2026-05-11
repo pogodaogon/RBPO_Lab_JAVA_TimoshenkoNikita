@@ -1,7 +1,6 @@
 package ru.mfa.web;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -10,6 +9,7 @@ import ru.mfa.model.Table;
 import ru.mfa.service.ReservationService;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/reservations")
@@ -93,11 +93,17 @@ public class ReservationController {
 
     @PutMapping("/{id}/reschedule")
     public ResponseEntity<?> rescheduleReservation(
-            @PathVariable Long id, 
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime newStartTime) {
+            @PathVariable Long id,
+            @RequestBody Map<String, String> body) {
         try {
+            if (!body.containsKey("newStartTime")) {
+                return ResponseEntity.badRequest().body("Поле 'newStartTime' обязательно (формат: yyyy-MM-ddTHH:mm:ss)");
+            }
+            LocalDateTime newStartTime = LocalDateTime.parse(body.get("newStartTime"));
             Reservation updatedReservation = reservationService.rescheduleReservation(id, newStartTime);
             return ResponseEntity.ok(updatedReservation);
+        } catch (java.time.format.DateTimeParseException e) {
+            return ResponseEntity.badRequest().body("Неверный формат даты. Используйте: yyyy-MM-ddTHH:mm:ss (пример: 2025-06-15T14:00:00)");
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
