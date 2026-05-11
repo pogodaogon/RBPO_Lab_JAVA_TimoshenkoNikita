@@ -15,3 +15,12 @@ target/
 
 ### Environment Variables ###
 .env
+
+### Keystores and Keys ###
+*.jks
+*.p12
+*.pfx
+*.key
+*.pem
+*.crt
+*.csr
