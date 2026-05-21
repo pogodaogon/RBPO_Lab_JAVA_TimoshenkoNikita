@@ -1,0 +1,1020 @@
+﻿// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\MavenDemoApplication.java
+package ru.mfa;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class MavenDemoApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(MavenDemoApplication.class, args);
+    }
+}
+
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\model\Customer.java
+package ru.mfa.model;
+
+import lombok.Data;
+
+@Data
+public class Customer {
+    private Long id;
+    private String name;
+    private String email;
+    private String phone;
+    private String notes;
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\model\MenuItem.java
+package ru.mfa.model;
+
+import lombok.Data;
+import java.math.BigDecimal;
+
+@Data
+public class MenuItem {
+    private Long id;
+    private Long restaurantId;
+    private String name;
+    private String description;
+    private String category; // "Р·Р°РєСѓСЃРєРё", "РѕСЃРЅРѕРІРЅС‹Рµ Р±Р»СЋРґР°", "РґРµСЃРµСЂС‚С‹", "РЅР°РїРёС‚РєРё"
+    private BigDecimal price;
+    private Boolean isAvailable;
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\model\Reservation.java
+package ru.mfa.model;
+
+import lombok.Data;
+import java.time.LocalDateTime;
+
+@Data
+public class Reservation {
+    private Long id;
+    private Long customerId;
+    private Long tableId;
+    private LocalDateTime reservationTime;
+    private Integer durationHours; // РїСЂРѕРґРѕР»Р¶РёС‚РµР»СЊРЅРѕСЃС‚СЊ РІ С‡Р°СЃР°С…
+    private Integer numberOfGuests;
+    private String status; // "PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"
+    private String specialRequests;
+    private LocalDateTime createdAt;
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\model\Restaurant.java
+package ru.mfa.model;
+
+import lombok.Data;
+
+@Data
+public class Restaurant {
+    private Long id;
+    private String name;
+    private String address;
+    private String phone;
+    private String openingHours;
+    private String description;
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\model\Table.java
+package ru.mfa.model;
+
+import lombok.Data;
+
+@Data
+public class Table {
+    private Long id;
+    private Long restaurantId;
+    private String tableNumber;
+    private Integer capacity;
+    private String location; // "Сѓ РѕРєРЅР°", "РІ Р·Р°Р»Рµ", "РЅР° С‚РµСЂСЂР°СЃРµ", "VIP"
+    private Boolean isAvailable;
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\repository\CustomerRepository.java
+package ru.mfa.repository;
+
+import org.springframework.stereotype.Repository;
+import ru.mfa.model.Customer;
+import java.util.*;
+
+@Repository
+public class CustomerRepository {
+    private final Map<Long, Customer> customers = new HashMap<>();
+    private Long nextId = 1L;
+
+    public Customer save(Customer customer) {
+        if (customer.getId() == null) {
+            customer.setId(nextId++);
+        }
+        customers.put(customer.getId(), customer);
+        return customer;
+    }
+
+    public Optional<Customer> findById(Long id) {
+        return Optional.ofNullable(customers.get(id));
+    }
+
+    public List<Customer> findAll() {
+        return new ArrayList<>(customers.values());
+    }
+
+    public void deleteById(Long id) {
+        customers.remove(id);
+    }
+
+    public boolean existsById(Long id) {
+        return customers.containsKey(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\repository\MenuItemRepository.java
+package ru.mfa.repository;
+
+import org.springframework.stereotype.Repository;
+import ru.mfa.model.MenuItem;
+import java.util.*;
+
+@Repository
+public class MenuItemRepository {
+    private final Map<Long, MenuItem> menuItems = new HashMap<>();
+    private Long nextId = 1L;
+
+    public MenuItem save(MenuItem menuItem) {
+        if (menuItem.getId() == null) {
+            menuItem.setId(nextId++);
+        }
+        menuItems.put(menuItem.getId(), menuItem);
+        return menuItem;
+    }
+
+    public Optional<MenuItem> findById(Long id) {
+        return Optional.ofNullable(menuItems.get(id));
+    }
+
+    public List<MenuItem> findAll() {
+        return new ArrayList<>(menuItems.values());
+    }
+
+    public List<MenuItem> findByRestaurantId(Long restaurantId) {
+        return menuItems.values().stream()
+                .filter(item -> restaurantId.equals(item.getRestaurantId()))
+                .toList();
+    }
+
+    public void deleteById(Long id) {
+        menuItems.remove(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\repository\ReservationRepository.java
+package ru.mfa.repository;
+
+import org.springframework.stereotype.Repository;
+import ru.mfa.model.Reservation;
+import java.time.LocalDateTime;
+import java.util.*;
+
+@Repository
+public class ReservationRepository {
+    private final Map<Long, Reservation> reservations = new HashMap<>();
+    private Long nextId = 1L;
+
+    public Reservation save(Reservation reservation) {
+        if (reservation.getId() == null) {
+            reservation.setId(nextId++);
+        }
+        reservations.put(reservation.getId(), reservation);
+        return reservation;
+    }
+
+    public Optional<Reservation> findById(Long id) {
+        return Optional.ofNullable(reservations.get(id));
+    }
+
+    public List<Reservation> findAll() {
+        return new ArrayList<>(reservations.values());
+    }
+
+    public void deleteById(Long id) {
+        reservations.remove(id);
+    }
+
+    public List<Reservation> findByTableId(Long tableId) {
+        return reservations.values().stream()
+                .filter(reservation -> tableId.equals(reservation.getTableId()))
+                .toList();
+    }
+
+    public List<Reservation> findByCustomerId(Long customerId) {
+        return reservations.values().stream()
+                .filter(reservation -> customerId.equals(reservation.getCustomerId()))
+                .toList();
+    }
+
+    public List<Reservation> findOverlappingReservations(Long tableId, LocalDateTime startTime, LocalDateTime endTime) {
+        return reservations.values().stream()
+                .filter(reservation -> tableId.equals(reservation.getTableId()))
+                .filter(reservation -> {
+                    LocalDateTime resStart = reservation.getReservationTime();
+                    LocalDateTime resEnd = resStart.plusHours(reservation.getDurationHours());
+                    return (startTime.isBefore(resEnd) && endTime.isAfter(resStart));
+                })
+                .toList();
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\repository\RestaurantRepository.java
+package ru.mfa.repository;
+
+import org.springframework.stereotype.Repository;
+import ru.mfa.model.Restaurant;
+import java.util.*;
+
+@Repository
+public class RestaurantRepository {
+    private final Map<Long, Restaurant> restaurants = new HashMap<>();
+    private Long nextId = 1L;
+
+    public Restaurant save(Restaurant restaurant) {
+        if (restaurant.getId() == null) {
+            restaurant.setId(nextId++);
+        }
+        restaurants.put(restaurant.getId(), restaurant);
+        return restaurant;
+    }
+
+    public Optional<Restaurant> findById(Long id) {
+        return Optional.ofNullable(restaurants.get(id));
+    }
+
+    public List<Restaurant> findAll() {
+        return new ArrayList<>(restaurants.values());
+    }
+
+    public void deleteById(Long id) {
+        restaurants.remove(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\repository\TableRepository.java
+package ru.mfa.repository;
+
+import org.springframework.stereotype.Repository;
+import ru.mfa.model.Table;
+import java.util.*;
+
+@Repository
+public class TableRepository {
+    private final Map<Long, Table> tables = new HashMap<>();
+    private Long nextId = 1L;
+
+    public Table save(Table table) {
+        if (table.getId() == null) {
+            table.setId(nextId++);
+        }
+        tables.put(table.getId(), table);
+        return table;
+    }
+
+    public Optional<Table> findById(Long id) {
+        return Optional.ofNullable(tables.get(id));
+    }
+
+    public List<Table> findAll() {
+        return new ArrayList<>(tables.values());
+    }
+
+    public List<Table> findByRestaurantId(Long restaurantId) {
+        return tables.values().stream()
+                .filter(table -> restaurantId.equals(table.getRestaurantId()))
+                .toList();
+    }
+
+    public void deleteById(Long id) {
+        tables.remove(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\service\CustomerService.java
+package ru.mfa.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.mfa.model.Customer;
+import ru.mfa.repository.CustomerRepository;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class CustomerService {
+
+    @Autowired
+    private CustomerRepository customerRepository;
+
+    public Customer createCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+
+    public List<Customer> getAllCustomers() {
+        return customerRepository.findAll();
+    }
+
+    public Optional<Customer> getCustomerById(Long id) {
+        return customerRepository.findById(id);
+    }
+
+    public Customer updateCustomer(Long id, Customer customerDetails) {
+        Customer customer = customerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("РљР»РёРµРЅС‚ РЅРµ РЅР°Р№РґРµРЅ СЃ id: " + id));
+
+        if (customerDetails.getName() != null) customer.setName(customerDetails.getName());
+        if (customerDetails.getEmail() != null) customer.setEmail(customerDetails.getEmail());
+        if (customerDetails.getPhone() != null) customer.setPhone(customerDetails.getPhone());
+        if (customerDetails.getNotes() != null) customer.setNotes(customerDetails.getNotes());
+
+        return customerRepository.save(customer);
+    }
+
+    public void deleteCustomer(Long id) {
+        customerRepository.deleteById(id);
+    }
+
+    public boolean customerExists(Long id) {
+        return customerRepository.existsById(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\service\MenuItemService.java
+package ru.mfa.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.mfa.model.MenuItem;
+import ru.mfa.repository.MenuItemRepository;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class MenuItemService {
+
+    @Autowired
+    private MenuItemRepository menuItemRepository;
+
+    public MenuItem createMenuItem(MenuItem menuItem) {
+        return menuItemRepository.save(menuItem);
+    }
+
+    public List<MenuItem> getAllMenuItems() {
+        return menuItemRepository.findAll();
+    }
+
+    public Optional<MenuItem> getMenuItemById(Long id) {
+        return menuItemRepository.findById(id);
+    }
+
+    public List<MenuItem> getMenuItemsByRestaurantId(Long restaurantId) {
+        return menuItemRepository.findByRestaurantId(restaurantId);
+    }
+
+    public MenuItem updateMenuItem(Long id, MenuItem menuItemDetails) {
+        MenuItem menuItem = menuItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("РџСѓРЅРєС‚ РјРµРЅСЋ РЅРµ РЅР°Р№РґРµРЅ СЃ id: " + id));
+
+        if (menuItemDetails.getName() != null) menuItem.setName(menuItemDetails.getName());
+        if (menuItemDetails.getDescription() != null) menuItem.setDescription(menuItemDetails.getDescription());
+        if (menuItemDetails.getCategory() != null) menuItem.setCategory(menuItemDetails.getCategory());
+        if (menuItemDetails.getPrice() != null) menuItem.setPrice(menuItemDetails.getPrice());
+        if (menuItemDetails.getIsAvailable() != null) menuItem.setIsAvailable(menuItemDetails.getIsAvailable());
+
+        return menuItemRepository.save(menuItem);
+    }
+
+    public void deleteMenuItem(Long id) {
+        menuItemRepository.deleteById(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\service\ReservationService.java
+package ru.mfa.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.mfa.model.Reservation;
+import ru.mfa.model.Table;
+import ru.mfa.repository.ReservationRepository;
+import ru.mfa.repository.TableRepository;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class ReservationService {
+
+    @Autowired
+    private ReservationRepository reservationRepository;
+
+    @Autowired
+    private TableRepository tableRepository;
+
+    @Autowired
+    private CustomerService customerService;
+
+    public Reservation createReservation(Reservation reservation) {
+        // РџСЂРѕРІРµСЂРєР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ РєР»РёРµРЅС‚Р°
+        if (!customerService.customerExists(reservation.getCustomerId())) {
+            throw new RuntimeException("РљР»РёРµРЅС‚ СЃ id " + reservation.getCustomerId() + " РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
+        }
+
+        // РџСЂРѕРІРµСЂРєР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ СЃС‚РѕР»РёРєР°
+        Optional<Table> tableOpt = tableRepository.findById(reservation.getTableId());
+        if (tableOpt.isEmpty()) {
+            throw new RuntimeException("РЎС‚РѕР»РёРє СЃ id " + reservation.getTableId() + " РЅРµ СЃСѓС‰РµСЃС‚РІСѓРµС‚");
+        }
+
+        Table table = tableOpt.get();
+
+        // РџСЂРѕРІРµСЂРєР° РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё СЃС‚РѕР»РёРєР°
+        if (Boolean.FALSE.equals(table.getIsAvailable())) {
+            throw new RuntimeException("РЎС‚РѕР»РёРє " + table.getTableNumber() + " РЅРµРґРѕСЃС‚СѓРїРµРЅ РґР»СЏ Р±СЂРѕРЅРёСЂРѕРІР°РЅРёСЏ");
+        }
+
+        // РџСЂРѕРІРµСЂРєР° РІРјРµСЃС‚РёРјРѕСЃС‚Рё
+        if (reservation.getNumberOfGuests() > table.getCapacity()) {
+            throw new RuntimeException("РЎС‚РѕР»РёРє РІРјРµС‰Р°РµС‚ С‚РѕР»СЊРєРѕ " + table.getCapacity() + " С‡РµР»РѕРІРµРє");
+        }
+
+        // РџСЂРѕРІРµСЂРєР° РЅР° РїРµСЂРµСЃРµС‡РµРЅРёРµ Р±СЂРѕРЅРёСЂРѕРІР°РЅРёР№
+        LocalDateTime startTime = reservation.getReservationTime();
+        LocalDateTime endTime = startTime.plusHours(reservation.getDurationHours());
+
+        List<Reservation> overlapping = reservationRepository.findOverlappingReservations(
+                reservation.getTableId(), startTime, endTime);
+
+        if (!overlapping.isEmpty()) {
+            throw new RuntimeException("РЎС‚РѕР»РёРє СѓР¶Рµ Р·Р°Р±СЂРѕРЅРёСЂРѕРІР°РЅ РЅР° СЌС‚Рѕ РІСЂРµРјСЏ");
+        }
+
+        // РЈСЃС‚Р°РЅРѕРІРєР° СЃС‚Р°С‚СѓСЃР° Рё РІСЂРµРјРµРЅРё СЃРѕР·РґР°РЅРёСЏ
+        reservation.setStatus("CONFIRMED");
+        reservation.setCreatedAt(LocalDateTime.now());
+
+        return reservationRepository.save(reservation);
+    }
+
+    public List<Reservation> getAllReservations() {
+        return reservationRepository.findAll();
+    }
+
+    public Optional<Reservation> getReservationById(Long id) {
+        return reservationRepository.findById(id);
+    }
+
+    public List<Reservation> getReservationsByCustomerId(Long customerId) {
+        return reservationRepository.findByCustomerId(customerId);
+    }
+
+    public List<Reservation> getReservationsByTableId(Long tableId) {
+        return reservationRepository.findByTableId(tableId);
+    }
+
+    public Reservation updateReservation(Long id, Reservation reservationDetails) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Р‘СЂРѕРЅСЊ РЅРµ РЅР°Р№РґРµРЅР° СЃ id: " + id));
+
+        // РњРѕР¶РЅРѕ РѕР±РЅРѕРІР»СЏС‚СЊ С‚РѕР»СЊРєРѕ РѕРїСЂРµРґРµР»РµРЅРЅС‹Рµ РїРѕР»СЏ
+        if (reservationDetails.getNumberOfGuests() != null) {
+            reservation.setNumberOfGuests(reservationDetails.getNumberOfGuests());
+        }
+        if (reservationDetails.getSpecialRequests() != null) {
+            reservation.setSpecialRequests(reservationDetails.getSpecialRequests());
+        }
+        if (reservationDetails.getStatus() != null) {
+            reservation.setStatus(reservationDetails.getStatus());
+        }
+
+        return reservationRepository.save(reservation);
+    }
+
+    public void cancelReservation(Long id) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Р‘СЂРѕРЅСЊ РЅРµ РЅР°Р№РґРµРЅР° СЃ id: " + id));
+
+        reservation.setStatus("CANCELLED");
+        reservationRepository.save(reservation);
+    }
+
+    public void deleteReservation(Long id) {
+        reservationRepository.deleteById(id);
+    }
+
+    public List<Table> findAvailableTables(LocalDateTime startTime, int durationHours, int guests) {
+        LocalDateTime endTime = startTime.plusHours(durationHours);
+
+        return tableRepository.findAll().stream()
+                .filter(table -> Boolean.TRUE.equals(table.getIsAvailable()))
+                .filter(table -> table.getCapacity() >= guests)
+                .filter(table -> reservationRepository.findOverlappingReservations(
+                        table.getId(), startTime, endTime).isEmpty())
+                .toList();
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\service\RestaurantService.java
+package ru.mfa.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.mfa.model.Restaurant;
+import ru.mfa.repository.RestaurantRepository;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class RestaurantService {
+
+    @Autowired
+    private RestaurantRepository restaurantRepository;
+
+    public Restaurant createRestaurant(Restaurant restaurant) {
+        return restaurantRepository.save(restaurant);
+    }
+
+    public List<Restaurant> getAllRestaurants() {
+        return restaurantRepository.findAll();
+    }
+
+    public Optional<Restaurant> getRestaurantById(Long id) {
+        return restaurantRepository.findById(id);
+    }
+
+    public Restaurant updateRestaurant(Long id, Restaurant restaurantDetails) {
+        Restaurant restaurant = restaurantRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Р РµСЃС‚РѕСЂР°РЅ РЅРµ РЅР°Р№РґРµРЅ СЃ id: " + id));
+
+        if (restaurantDetails.getName() != null) restaurant.setName(restaurantDetails.getName());
+        if (restaurantDetails.getAddress() != null) restaurant.setAddress(restaurantDetails.getAddress());
+        if (restaurantDetails.getPhone() != null) restaurant.setPhone(restaurantDetails.getPhone());
+        if (restaurantDetails.getOpeningHours() != null) restaurant.setOpeningHours(restaurantDetails.getOpeningHours());
+        if (restaurantDetails.getDescription() != null) restaurant.setDescription(restaurantDetails.getDescription());
+
+        return restaurantRepository.save(restaurant);
+    }
+
+    public void deleteRestaurant(Long id) {
+        restaurantRepository.deleteById(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\service\TableService.java
+package ru.mfa.service;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import ru.mfa.model.Table;
+import ru.mfa.repository.TableRepository;
+import java.util.List;
+import java.util.Optional;
+
+@Service
+public class TableService {
+
+    @Autowired
+    private TableRepository tableRepository;
+
+    public Table createTable(Table table) {
+        return tableRepository.save(table);
+    }
+
+    public List<Table> getAllTables() {
+        return tableRepository.findAll();
+    }
+
+    public Optional<Table> getTableById(Long id) {
+        return tableRepository.findById(id);
+    }
+
+    public List<Table> getTablesByRestaurantId(Long restaurantId) {
+        return tableRepository.findByRestaurantId(restaurantId);
+    }
+
+    public Table updateTable(Long id, Table tableDetails) {
+        Table table = tableRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("РЎС‚РѕР»РёРє РЅРµ РЅР°Р№РґРµРЅ СЃ id: " + id));
+
+        if (tableDetails.getTableNumber() != null) table.setTableNumber(tableDetails.getTableNumber());
+        if (tableDetails.getCapacity() != null) table.setCapacity(tableDetails.getCapacity());
+        if (tableDetails.getLocation() != null) table.setLocation(tableDetails.getLocation());
+        if (tableDetails.getIsAvailable() != null) table.setIsAvailable(tableDetails.getIsAvailable());
+
+        return tableRepository.save(table);
+    }
+
+    public void deleteTable(Long id) {
+        tableRepository.deleteById(id);
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\web\CustomerController.java
+package ru.mfa.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ru.mfa.model.Customer;
+import ru.mfa.service.CustomerService;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/customers")
+public class CustomerController {
+
+    @Autowired
+    private CustomerService customerService;
+
+    @PostMapping
+    public ResponseEntity<Customer> createCustomer(@RequestBody Customer customer) {
+        Customer createdCustomer = customerService.createCustomer(customer);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdCustomer);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Customer>> getAllCustomers() {
+        return ResponseEntity.ok(customerService.getAllCustomers());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Customer> getCustomerById(@PathVariable Long id) {
+        return customerService.getCustomerById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Customer> updateCustomer(@PathVariable Long id, @RequestBody Customer customer) {
+        try {
+            Customer updatedCustomer = customerService.updateCustomer(id, customer);
+            return ResponseEntity.ok(updatedCustomer);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteCustomer(@PathVariable Long id) {
+        customerService.deleteCustomer(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\web\HelloController.java
+package ru.mfa.web;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.OffsetDateTime;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api")
+public class HelloController {
+
+    @GetMapping("/hello")
+    public String hello() {
+        return "Hello, World!";
+    }
+
+    @GetMapping("/greet/{name}")
+    public String greet(@PathVariable String name) {
+        return "Hello, " + name + "!";
+    }
+
+    @GetMapping("/ping")
+    public Map<String, Object> ping() {
+        return Map.of(
+                "status", "ok",
+                "time", OffsetDateTime.now().toString()
+        );
+    }
+}
+
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\web\MenuItemController.java
+package ru.mfa.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ru.mfa.model.MenuItem;
+import ru.mfa.service.MenuItemService;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/menu-items")
+public class MenuItemController {
+
+    @Autowired
+    private MenuItemService menuItemService;
+
+    @PostMapping
+    public ResponseEntity<MenuItem> createMenuItem(@RequestBody MenuItem menuItem) {
+        MenuItem createdMenuItem = menuItemService.createMenuItem(menuItem);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdMenuItem);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<MenuItem>> getAllMenuItems() {
+        return ResponseEntity.ok(menuItemService.getAllMenuItems());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<MenuItem> getMenuItemById(@PathVariable Long id) {
+        return menuItemService.getMenuItemById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/restaurant/{restaurantId}")
+    public ResponseEntity<List<MenuItem>> getMenuItemsByRestaurant(@PathVariable Long restaurantId) {
+        return ResponseEntity.ok(menuItemService.getMenuItemsByRestaurantId(restaurantId));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<MenuItem> updateMenuItem(@PathVariable Long id, @RequestBody MenuItem menuItem) {
+        try {
+            MenuItem updatedMenuItem = menuItemService.updateMenuItem(id, menuItem);
+            return ResponseEntity.ok(updatedMenuItem);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMenuItem(@PathVariable Long id) {
+        menuItemService.deleteMenuItem(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\web\ReservationController.java
+package ru.mfa.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ru.mfa.model.Reservation;
+import ru.mfa.model.Table;
+import ru.mfa.service.ReservationService;
+import java.time.LocalDateTime;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/reservations")
+public class ReservationController {
+
+    @Autowired
+    private ReservationService reservationService;
+
+    @PostMapping
+    public ResponseEntity<?> createReservation(@RequestBody Reservation reservation) {
+        try {
+            Reservation createdReservation = reservationService.createReservation(reservation);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdReservation);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Reservation>> getAllReservations() {
+        return ResponseEntity.ok(reservationService.getAllReservations());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Reservation> getReservationById(@PathVariable Long id) {
+        return reservationService.getReservationById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/customer/{customerId}")
+    public ResponseEntity<List<Reservation>> getReservationsByCustomer(@PathVariable Long customerId) {
+        return ResponseEntity.ok(reservationService.getReservationsByCustomerId(customerId));
+    }
+
+    @GetMapping("/table/{tableId}")
+    public ResponseEntity<List<Reservation>> getReservationsByTable(@PathVariable Long tableId) {
+        return ResponseEntity.ok(reservationService.getReservationsByTableId(tableId));
+    }
+
+    @GetMapping("/available")
+    public ResponseEntity<List<Table>> findAvailableTables(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startTime,
+            @RequestParam(defaultValue = "2") int durationHours,
+            @RequestParam(defaultValue = "2") int guests) {
+
+        return ResponseEntity.ok(reservationService.findAvailableTables(startTime, durationHours, guests));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateReservation(@PathVariable Long id, @RequestBody Reservation reservation) {
+        try {
+            Reservation updatedReservation = reservationService.updateReservation(id, reservation);
+            return ResponseEntity.ok(updatedReservation);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}/cancel")
+    public ResponseEntity<Void> cancelReservation(@PathVariable Long id) {
+        reservationService.cancelReservation(id);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteReservation(@PathVariable Long id) {
+        reservationService.deleteReservation(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\web\RestaurantController.java
+package ru.mfa.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ru.mfa.model.Restaurant;
+import ru.mfa.service.RestaurantService;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/restaurants")
+public class RestaurantController {
+
+    @Autowired
+    private RestaurantService restaurantService;
+
+    @PostMapping
+    public ResponseEntity<Restaurant> createRestaurant(@RequestBody Restaurant restaurant) {
+        Restaurant createdRestaurant = restaurantService.createRestaurant(restaurant);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdRestaurant);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Restaurant>> getAllRestaurants() {
+        return ResponseEntity.ok(restaurantService.getAllRestaurants());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Restaurant> getRestaurantById(@PathVariable Long id) {
+        return restaurantService.getRestaurantById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Restaurant> updateRestaurant(@PathVariable Long id, @RequestBody Restaurant restaurant) {
+        try {
+            Restaurant updatedRestaurant = restaurantService.updateRestaurant(id, restaurant);
+            return ResponseEntity.ok(updatedRestaurant);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteRestaurant(@PathVariable Long id) {
+        restaurantService.deleteRestaurant(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\main\java\ru\mfa\web\TableController.java
+package ru.mfa.web;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import ru.mfa.model.Table;
+import ru.mfa.service.TableService;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/tables")
+public class TableController {
+
+    @Autowired
+    private TableService tableService;
+
+    @PostMapping
+    public ResponseEntity<Table> createTable(@RequestBody Table table) {
+        Table createdTable = tableService.createTable(table);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTable);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Table>> getAllTables() {
+        return ResponseEntity.ok(tableService.getAllTables());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Table> getTableById(@PathVariable Long id) {
+        return tableService.getTableById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/restaurant/{restaurantId}")
+    public ResponseEntity<List<Table>> getTablesByRestaurant(@PathVariable Long restaurantId) {
+        return ResponseEntity.ok(tableService.getTablesByRestaurantId(restaurantId));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Table> updateTable(@PathVariable Long id, @RequestBody Table table) {
+        try {
+            Table updatedTable = tableService.updateTable(id, table);
+            return ResponseEntity.ok(updatedTable);
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteTable(@PathVariable Long id) {
+        tableService.deleteTable(id);
+        return ResponseEntity.noContent().build();
+    }
+}
+
+
+// File: C:\Users\nekst\IdeaProjects\RBPO_Lab_JAVA\src\test\java\ru\mfa\HelloControllerTest.java
+package ru.mfa;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.ResponseEntity;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+class HelloControllerTest {
+
+    @LocalServerPort
+    private int port;
+
+    @Autowired
+    private TestRestTemplate restTemplate;
+
+    @Test
+    void helloEndpointReturnsHelloWorld() {
+        ResponseEntity<String> resp = restTemplate.getForEntity("http://localhost:" + port + "/api/hello", String.class);
+        assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(resp.getBody()).isEqualTo("Hello, World!");
+    }
+
+    @Test
+    void pingEndpointReturnsOk() {
+        ResponseEntity<String> resp = restTemplate.getForEntity("http://localhost:" + port + "/api/ping", String.class);
+        assertThat(resp.getStatusCode().is2xxSuccessful()).isTrue();
+        assertThat(resp.getBody()).contains("\"status\":\"ok\"");
+    }
+}
+
+
+
